@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Felicis Portfolio Flashcards</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎴</text></svg>">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #08080e; }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<script type="text/babel">
+const { useState, useCallback } = React;
+
+const COMPANIES = [
+  {
+    id: "ricursive",
+    name: "Ricursive Intelligence",
+    color: "#00C9A7",
+    emoji: "🔄",
+    cards: [
+      { cat: "Origin Story", front: "How did the name 'Ricursive' come about?", back: "It represents 'recursive self-improvement' — AI designs chips that power better AI, which designs better chips. The founders chose it to capture their core thesis: a feedback loop between AI and hardware that accelerates both." },
+      { cat: "Founders", front: "Who founded Ricursive Intelligence?", back: "Dr. Anna Goldie (CEO) and Dr. Azalia Mirhoseini (CTO). They co-created AlphaChip at Google Brain/DeepMind, which used deep reinforcement learning to design chip layouts. AlphaChip was deployed across four generations of Google's TPU chips with superhuman layout quality." },
+      { cat: "What They Build", front: "What does Ricursive build?", back: "A full-stack AI platform for semiconductor design. It compresses chip design cycles from 2-3 years down dramatically. Their AI generates 'alien' designs — curved, donut-shaped placements humans would never attempt — that outperform human layouts on wire length, power, and timing." },
+      { cat: "Why It Matters", front: "Why is Ricursive positioned as a 'root node' company?", back: "Chips are the fuel for AI scaling laws. Faster chip design → better compute → better AI → even faster chip design. They're enabling a shift from 'fabless' to 'designless' — any company can create custom silicon without massive in-house design teams." },
+      { cat: "By The Numbers", front: "What's Ricursive's funding and traction?", back: "$335M total raised. $35M seed led by Sequoia (Dec 2025), then $300M Series A led by Lightspeed at $4B valuation just 2 months later. Investors include DST Global, NVentures (NVIDIA), Felicis. Fewer than 10 employees at Series A." }
+    ]
+  },
+  {
+    id: "periodic",
+    name: "Periodic Labs",
+    color: "#4ADE80",
+    emoji: "⚗️",
+    cards: [
+      { cat: "Origin Story", front: "How did Periodic Labs start?", back: "Liam Fedus tweeted he was leaving OpenAI, setting off a VC frenzy. Peter Deng (Felicis GP, ex-OpenAI) texted him immediately. They met for coffee in Noe Valley, SF, then went on a pitch walk through the hills. Felicis cut the first check. One investor literally wrote Periodic a 'love letter' to win the deal." },
+      { cat: "Founders", front: "Who are the Periodic Labs founders?", back: "Liam Fedus: Ex-VP of Research at OpenAI. Created ChatGPT, led post-training team. Published first trillion-parameter neural network paper.\n\nEkin Dogus Cubuk: Ex-Head of Chemistry & Materials at DeepMind. Led GNoME paper discovering 2.2M new crystal structures." },
+      { cat: "What They Build", front: "What does Periodic Labs actually do?", back: "They build 'AI scientists' paired with autonomous physical laboratories. AI agents propose hypotheses, robots run experiments, AI analyzes results, then iterates. Each experiment generates proprietary data (including failures) that competitors can't access. Initial focus: superconductors, semiconductor thermal issues." },
+      { cat: "Why It Matters", front: "What's the big thesis behind Periodic Labs?", back: "AI has exhausted internet data. The next frontier is generating NEW knowledge through physical experimentation. Their thesis: 'Intelligence is necessary but not sufficient. New knowledge is created when ideas are found to be consistent with reality.' The next great dataset comes from the lab bench, not the web." },
+      { cat: "By The Numbers", front: "What are Periodic's key stats?", back: "$300M seed round — possibly the largest seed in startup history. Led by a16z, with NVIDIA, Accel, Felicis. $1.5B pre-money valuation. Angel investors: Jeff Bezos, Eric Schmidt, Jeff Dean. Team includes creators of ChatGPT and key transformer researchers." }
+    ]
+  },
+  {
+    id: "datology",
+    name: "DatologyAI",
+    color: "#A78BFA",
+    emoji: "🧬",
+    cards: [
+      { cat: "Origin Story", front: "What problem did DatologyAI's founders keep hitting?", back: "Across Meta FAIR, DeepMind, and MosaicML, they saw the same pattern: 'Models are what they eat.' Even the best architectures underperform on bad data. Ari Morcos co-authored the NeurIPS 2022 best paper on dataset trimming, proving you could train better models with less but higher-quality data." },
+      { cat: "Founders", front: "Who founded DatologyAI?", back: "Ari Morcos (CEO): PhD neuroscience Harvard, 2 years DeepMind, 5 years Meta FAIR as Senior Staff Scientist.\nMatthew Leavitt (CSO): Ex-MosaicML and MetaAI, PhD neuroscience McGill.\nBogdan Gaza (CTO): 10+ years infrastructure at Amazon and Twitter." },
+      { cat: "What They Build", front: "What does DatologyAI's platform do?", back: "Automated data curation for AI training at petabyte scale. It identifies the most valuable data, removes redundant/harmful points, suggests augmentation strategies, and optimizes training batches. Modality-agnostic — works on text, images, and more. Replaces manual data engineering that takes teams months." },
+      { cat: "Why It Matters", front: "Why do the world's top AI researchers back DatologyAI?", back: "Their angel investor list is unprecedented: Yann LeCun (Meta Chief AI Scientist), Geoffrey Hinton (Godfather of AI), Jeff Dean (Google Chief Scientist), Jascha Sohl-Dickstein (invented diffusion models). Named WEF Technology Pioneer. These people know data quality is the bottleneck." },
+      { cat: "By The Numbers", front: "What's DatologyAI's funding picture?", back: "$57.6M total raised. $11.65M seed led by Amplify Partners. $46M Series A led by Felicis, with M12 (Microsoft), Amazon Alexa Fund, and Elad Gil. Founded September 2023. Based in San Francisco." }
+    ]
+  },
+  {
+    id: "simular",
+    name: "Simular",
+    color: "#60A5FA",
+    emoji: "🖥️",
+    cards: [
+      { cat: "Origin Story", front: "How did Simular begin?", back: "In September 2023, Ang Li and Jiachen Yang left DeepMind and joined South Park Commons. Week 1: launched a MacOS chatbot. October: first API tool with Google Calendar. November: achieved first pixel-level computer control — physically moving the mouse. By demo day, Simular could perform a wide spectrum of digital tasks." },
+      { cat: "Founders", front: "Who founded Simular?", back: "Ang Li (CEO): Ex-Google DeepMind continuous learning scientist. PhD University of Maryland. Previously at Baidu Apollo, Facebook AI.\n\nJiachen Yang: Ex-DeepMind reinforcement learning specialist. PhD Georgia Tech. Previously at Electronic Arts, Honda Research.\n\nThey met at DeepMind working on Google products including Waymo." },
+      { cat: "What They Build", front: "What makes Simular different from other AI agents?", back: "Simular controls the ENTIRE desktop — not just the browser. It physically moves the mouse, clicks buttons, and types across any application. Their 'neuro-symbolic' approach + proprietary Simulang abstraction layer converts successful AI workflows into deterministic code, solving the hallucination problem." },
+      { cat: "Why It Matters", front: "Who needs Simular and why?", back: "They target 'API-deficient industries' — insurance, healthcare, finance — where repetitive computer work can't be automated because there are no APIs. People hired globally to sit at computers filling out forms. Selected as 1 of 5 companies for Microsoft's Windows 365 for Agents program." },
+      { cat: "By The Numbers", front: "Key Simular metrics?", back: "$27M total raised. $21.5M Series A led by Felicis, $5M seed. NVIDIA doubled down from seed. Agent S framework: 69.9% on OSWorld benchmark (human: 72%). Early customers: car dealerships automating VIN searches, HOAs extracting contract data from PDFs." }
+    ]
+  },
+  {
+    id: "skild",
+    name: "Skild AI",
+    color: "#F472B6",
+    emoji: "🤖",
+    cards: [
+      { cat: "Origin Story", front: "How did Skild AI start?", back: "Deepak Pathak and Abhinav Gupta discussed founding a company for nearly a decade while at FAIR and CMU. In 2023, believing the 'GPT-3 moment for robotics' had arrived, they left their Carnegie Mellon professorships. Pathak pioneered 'curiosity-driven learning' — teaching robots to explore like babies." },
+      { cat: "Founders", front: "Who are the Skild AI founders?", back: "Deepak Pathak (CEO): IIT Kanpur gold medalist, PhD UC Berkeley, CMU Robotics professor. His 2017 curiosity-driven AI paper has 4K+ citations.\n\nAbhinav Gupta (President): CMU Robotics professor since 2009, founding member of Meta FAIR. 75K+ citations. Expert in self-supervised robotics." },
+      { cat: "What They Build", front: "What is the Skild Brain?", back: "A universal foundation model for robotics — one 'brain' that controls any robot for any task. Unlike vertical robots built for specific jobs, Skild Brain works across quadrupeds, humanoids, robotic arms, and mobile manipulators. Trained on massive human video data and physics simulations to build 'physical intuition.'" },
+      { cat: "Why It Matters", front: "Why is Skild a 'generational' opportunity?", back: "By 2030, global talent shortage could reach 85.2M people, costing $8.5T. Skild's universal brain could bring robots to every industry. Aydin Senkut: 'The most visionary robotics company we've seen in 15+ years.' They're building the 'Excel of robotics' — one platform for all robotic hardware." },
+      { cat: "By The Numbers", front: "What has Skild raised?", back: "$1.81B total across 4 rounds. $300M Series A at $1.5B (July 2024). $1.4B Series C (Jan 2026) at $14B+ valuation led by SoftBank. Investors: NVIDIA, Samsung, LG, Schneider, Salesforce, Sequoia, Felicis. ~34 employees. Pittsburgh-based." }
+    ]
+  },
+  {
+    id: "poolside",
+    name: "Poolside",
+    color: "#38BDF8",
+    emoji: "🏊",
+    cards: [
+      { cat: "Origin Story", front: "How did Poolside come together?", back: "Jason Warner (CTO of GitHub, incubated Copilot) and Eiso Kant (founded source{d}, the first company applying AI to source code) shared a belief that AGI is probable — and the path runs through software. Founded July 2023, incubated at Redpoint. HQ moved to Paris in August 2024." },
+      { cat: "Founders", front: "Who are the Poolside founders?", back: "Jason Warner (CEO): Former CTO of GitHub where he incubated Copilot and Code Search. Previously led engineering at Heroku and Canonical.\n\nEiso Kant (CTO): Founded source{d} — the world's first company dedicated to applying AI to source code." },
+      { cat: "What They Build", front: "What makes Poolside's approach unique?", back: "RLCEF (Reinforcement Learning from Code Execution Feedback): Models learn by coding themselves across 500K+ codebases, not just reading code. They explore solutions, learn from successes and failures. No data or code ever leaves the customer's security boundary. Enterprise-grade from day one." },
+      { cat: "Why It Matters", front: "What's Poolside's big vision?", back: "Software development will be the first capability where AI surpasses human intelligence. Vision: turn millions of developers into billions. Projects that took 10 engineers six months done in hours of compute. They're pursuing AGI through code — 'the final boss battle.'" },
+      { cat: "By The Numbers", front: "Poolside funding and scale?", back: "$626M+ total. $126M seed led by Felicis, Redpoint, Xavier Niel. $500M Series B led by Bain Capital at $3B valuation. AWS partnership (Amazon Bedrock). 10,000 NVIDIA GPUs. 80% of team Europe-based. ~62 employees." }
+    ]
+  },
+  {
+    id: "lmarena",
+    name: "LMArena",
+    color: "#FBBF24",
+    emoji: "⚔️",
+    cards: [
+      { cat: "Origin Story", front: "How did LMArena become the AI industry's standard?", back: "Started as 'Chatbot Arena' at UC Berkeley's Sky Computing Lab in 2023. Grad students built it because they'd trained Vicuna but existing benchmarks couldn't tell if models were truly good. Solution: let real users compare models anonymously and vote. It went viral — now 60M+ monthly conversations." },
+      { cat: "Founders", front: "Who founded LMArena?", back: "Anastasios Angelopoulos (CEO): UC Berkeley researcher, statistician.\nWei-Lin Chiang (CTO): UC Berkeley researcher.\nIon Stoica: Berkeley CS professor, co-founder of Databricks, faculty advisor.\n\nThe core team is researchers from Berkeley, Stanford, UCSD, and CMU." },
+      { cat: "What They Build", front: "How does LMArena work?", back: "Users submit a prompt → two anonymous AI models respond → users vote for the better answer. Aggregated across millions of votes using Elo ratings, it produces live leaderboards across text, code, image, video, and search. 5M+ monthly active users across 150 countries. The definitive 'who's winning' in AI." },
+      { cat: "Why It Matters", front: "Why do all the major labs care about LMArena?", back: "OpenAI, Google, Anthropic, xAI all test models here — often secretly before launch. DeepSeek tested R1 months before its debut. OpenAI tested GPT-5 as 'summit'. Google tested Gemini as 'Nano Banana'. Peter Deng (Felicis): 'Once it becomes the de-facto benchmark layer, the product naturally expands.'" },
+      { cat: "By The Numbers", front: "LMArena's growth trajectory?", back: "$250M total. $100M seed (May 2025) at $600M valuation. $150M Series A (Jan 2026) led by Felicis + UC Investments at $1.7B — unicorn in 7 months. ARR exceeded $30M within 4 months of launching commercial product. 400+ models evaluated. Peter Deng joined board." }
+    ]
+  },
+  {
+    id: "crusoe",
+    name: "Crusoe",
+    color: "#F59E0B",
+    emoji: "⚡",
+    cards: [
+      { cat: "Origin Story", front: "What's Crusoe's unconventional founding story?", back: "Chase Lochmiller (MIT math/physics, Stanford CS/AI, ex-Jump Trading) summited Everest in 2018 and saw gas flares from oil fields lighting up the night sky. He realized wasted energy could power computing. With Cully Cavness (oil & gas background), they founded Crusoe in Denver to turn waste gas into compute." },
+      { cat: "Founders", front: "Who leads Crusoe?", back: "Chase Lochmiller (CEO): MIT math/physics, Stanford CS/AI grad, algorithmic trader at Jump Trading. Summited Everest 2018.\n\nCully Cavness (President/COO): Oil & gas family background, brings energy industry expertise.\n\nThey pair tech + energy DNA — exactly what AI infrastructure needs." },
+      { cat: "What They Build", front: "What makes Crusoe's approach unique?", back: "Vertically integrated AI infrastructure: find stranded/renewable energy → build hyperscale data centers → offer Crusoe Cloud (GPU IaaS). Digital Flare Mitigation technology converts waste gas from oil flaring into electricity for AI. They manufacture modular data centers in-house." },
+      { cat: "Why It Matters", front: "Why is Crusoe at the center of AI infrastructure?", back: "Building the Stargate campus in Abilene, TX: 1.2 gigawatts — one of the world's most powerful AI factories. Part of the $500B Stargate initiative with OpenAI/Oracle/SoftBank. 45GW pipeline across North America and Europe. They solve AI's two biggest problems: energy and compute." },
+      { cat: "By The Numbers", front: "Crusoe's scale?", back: "$2.64B raised across 13 rounds. $10B valuation. Investors: Founders Fund, NVIDIA, Fidelity, Mubadala, Bain Capital. ~$276M revenue 2024, projecting near $1B for 2025. Building one of the world's largest AI data center campuses." }
+    ]
+  },
+  {
+    id: "n8n",
+    name: "n8n",
+    color: "#EF4444",
+    emoji: "🔗",
+    cards: [
+      { cat: "Origin Story", front: "How did n8n's founder go from VFX to workflow automation?", back: "Jan Oberhauser was a visual effects artist (worked on Maleficent) who taught himself to code. In 2019, he published n8n ('nodemation' = node + automation) to GitHub as a solo founder in Berlin. When AI hit in 2022-23, he pivoted to AI orchestration. Result: 4x revenue growth in 8 months vs previous 6 years combined." },
+      { cat: "Founders", front: "Who is Jan Oberhauser?", back: "Solo founder. Former VFX artist who worked on Maleficent and other films. Self-taught programmer. Based in Berlin. Built n8n from scratch. His creative + technical background shaped n8n's visual node-based approach — making complex workflows feel intuitive." },
+      { cat: "What They Build", front: "What is n8n?", back: "AI-powered workflow automation with a visual node-based editor. 'Connect everything to anything' — 500+ integrations, supports any LLM, MCP protocol. Self-hosted or cloud. 'Fair-code' licensing. 75-80% of customer workflows now use AI. Vision: become the 'Excel of AI.'" },
+      { cat: "Why It Matters", front: "Why is n8n winning the AI workflow race?", back: "145K+ GitHub stars (Top 50 globally). 700K+ active developers. Customers: Volkswagen, Vodafone (saved £2.2M), Delivery Hero, KPMG, Twitch, United Nations. The AI pivot was perfectly timed — they had automation infrastructure already built; AI orchestration was the natural evolution." },
+      { cat: "By The Numbers", front: "n8n's growth metrics?", back: "$240M total raised. $180M Series C led by Accel at $2.5B valuation (up from $350M just 7 months prior — 7x jump). Investors: NVentures (NVIDIA), Sequoia (3rd ever seed in Germany), Felicis (Series A), Highland Europe. ARR above $40M with 10x YoY usage growth." }
+    ]
+  },
+  {
+    id: "chalk",
+    name: "Chalk AI",
+    color: "#818CF8",
+    emoji: "📐",
+    cards: [
+      { cat: "Origin Story", front: "What inspired the name 'Chalk'?", back: "Named after mathematicians' favorite tool — the chalkboard. Logo is the QED symbol (∎). The founders saw the same problem across Affirm, Palantir, Stripe, and Google: real-time data pipelines for ML were painfully hard. They built Chalk to make it effortless." },
+      { cat: "Founders", front: "Who founded Chalk?", back: "Marc Freed-Finnegan (CEO): Launched Google Wallet, founded Index (acquired by Stripe → Stripe Terminal).\n\nElliot Marx: Built ML infrastructure at Affirm. Co-founded Haven Money (acquired by Credit Karma).\n\nAndrew Moreland: Ex-Palantir. Also co-founded Haven Money. All three met at Stanford." },
+      { cat: "What They Build", front: "What does Chalk actually do?", back: "Real-time data platform for AI inference. Teams declare features in Python → Chalk compiles them into parallel Rust pipelines delivering data in <5ms at 100K+ QPS. Same code for training and serving, eliminating skew. Aydin Senkut called it 'the Databricks of the AI era.'" },
+      { cat: "Why It Matters", front: "Why did Aydin call Chalk 'the Databricks of the AI era'?", back: "Every AI model needs fresh data at inference time — for fraud detection, identity verification, lending decisions, content moderation. Chalk fills this critical gap. Customers: MoneyLion, Socure, Doppel, Ramp, Melio. 5ms latency at massive scale was considered impossible." },
+      { cat: "By The Numbers", front: "Chalk's funding and growth?", back: "$60M total. $10M seed from General Catalyst, Unusual Ventures, Xfund. $50M Series A led by Felicis at $500M valuation. Aydin Senkut joined the board. ~30 employees. Named Challenger in Gartner AI development platforms analysis." }
+    ]
+  },
+  {
+    id: "armada",
+    name: "Armada",
+    color: "#0EA5E9",
+    emoji: "🛰️",
+    cards: [
+      { cat: "Origin Story", front: "What gap did Armada's founders see?", back: "75% of enterprise data originates at the edge (oil rigs, military bases, disaster zones) — but virtually nothing is done with it. An average oil rig produces 2TB/day with zero processing. With Starlink enabling connectivity anywhere and AI needing to run locally, Armada was born in 2022." },
+      { cat: "Founders", front: "Who founded Armada?", back: "Dan Wright (CEO) and Jon Runyan (COO), with Pradeep Nair (founding CTO). Board includes Trae Stephens (Founders Fund, Anduril co-founder). The company emerged from discussions with Founders Fund about building something with 'material, positive impact.'" },
+      { cat: "What They Build", front: "What are Armada's Galleon products?", back: "Ruggedized, satellite-connected modular data centers: Beacon (briefcase-sized), Cruiser (20' container), Triton (40' container), Leviathan (two 45' containers — 10x Triton compute). All powered by Armada Edge Platform with Starlink connectivity. Deployed in 43 countries." },
+      { cat: "Why It Matters", front: "Why is Armada uniquely positioned?", back: "Dual-use: equally suited for an oil rig or a military frontline. US Navy testing Galleons for autonomous drone data processing. Microsoft partnership puts all products on Azure Marketplace. Distributed architecture means 'can't attack one brain to destroy it.' Cloud is $1T — Armada brings it everywhere." },
+      { cat: "By The Numbers", front: "Armada's traction?", back: "$200M+ total raised. Investors: Founders Fund, Lux Capital, M12 (Microsoft), Shield Capital, Felicis. Partners: Starlink, Microsoft/Azure, Halliburton, Skydio. 43 countries. Commander Edge starts at $450K/year. ~60 employees." }
+    ]
+  },
+  {
+    id: "runway",
+    name: "Runway AI",
+    color: "#EC4899",
+    emoji: "🎬",
+    cards: [
+      { cat: "Origin Story", front: "How did three art students create an AI powerhouse?", back: "Cristóbal Valenzuela (Chilean artist/economist), Anastasis Germanidis, and Alejandro Matamala met at NYU Tisch School of the Arts ~2016. Fascinated by Google's Deep Dream, they started experimenting with AI art. In 2018, they founded Runway in Brooklyn — an art school project that became a frontier AI lab." },
+      { cat: "Founders", front: "Who is Cristóbal Valenzuela?", back: "Chilean-born technologist and artist. Studied economics and design in Chile, media arts at NYU Tisch. Co-created ml5.js (open-source ML for artists). TIME100 AI Most Influential People (2023). Philosophy: 'Think of AI as a new type of camera — a system that can unlock new dimensions of storytelling.'" },
+      { cat: "What They Build", front: "What does Runway offer?", back: "The world's first commercially available AI video generation tool. Gen-3/Gen-4+ models enable text-to-video, image-to-video, and video editing. Used by editors on 'Everything Everywhere All at Once' (Best Picture Oscar). Full-stack research company: foundational models to consumer creative tools." },
+      { cat: "Why It Matters", front: "Why is Runway defining the future of media?", back: "Building 'world models' that simulate reality. Used by The Late Show, ad agencies, architecture firms (KPF), and indie filmmakers. Their AI Film Festival showcases creator work. Vision: every piece of media content will eventually be AI-generated or AI-assisted." },
+      { cat: "By The Numbers", front: "Runway's scale?", back: "$200M+ raised. Investors: Google, NVIDIA, Salesforce, Felicis. Founded 2018, Brooklyn-based. Academy Award-winning content made with their tools. Annual AI Film Festival. Technology across Hollywood, advertising, architecture." }
+    ]
+  },
+  {
+    id: "radiant",
+    name: "Radiant Nuclear",
+    color: "#FB923C",
+    emoji: "☢️",
+    cards: [
+      { cat: "Origin Story", front: "What problem is Radiant solving?", back: "AI data centers need massive, reliable, clean power — but many sites lack grid access. Traditional nuclear takes decades and billions. Radiant builds portable microreactors deployable anywhere. Nuclear is the only energy source dense enough for AI's exponential power demands." },
+      { cat: "Founders", front: "Who founded Radiant?", back: "Doug Bernauer, CEO and Founder. Aerospace and defense engineering background. Vision: nuclear energy should be deployable like industrial equipment — manufactured in a factory, shipped to site, operational quickly. Not a decades-long megaproject." },
+      { cat: "What They Build", front: "What is the Kaleidos microreactor?", back: "A portable nuclear microreactor for rapid deployment. Powers remote military bases, data centers, mining operations, disaster relief. Factory-manufactured and transportable. On track for first reactor (Kaleidos Demonstration Unit) at Idaho National Lab's DOME facility." },
+      { cat: "Why It Matters", front: "Why is Radiant important for AI infrastructure?", back: "AI's power demands grow exponentially. Data centers need 24/7 clean baseload that renewables can't fully provide. Radiant microreactors deploy directly at data center sites. Deal for 20 Kaleidos with Equinix (major data center operator) plus US Air Force contract." },
+      { cat: "By The Numbers", front: "Radiant's funding and milestones?", back: "$300M+ raised. Investors: Founders Fund, Draper Associates, Boost VC, ARK Venture Fund, Chevron Technology Ventures. US Air Force/Defense Innovation Unit contract. Equinix deal for 20 microreactors. Targeting first reactor 2028." }
+    ]
+  },
+  {
+    id: "supabase",
+    name: "Supabase",
+    color: "#3ECF8E",
+    emoji: "🗄️",
+    cards: [
+      { cat: "Origin Story", front: "How did Supabase start?", back: "Paul Copplestone and Ant Wilson saw developers struggling with Firebase's limitations — vendor lock-in, proprietary tech, limited querying. They built an open-source alternative on PostgreSQL, the world's most loved database. YC S20. The open-source approach created a massive developer community organically." },
+      { cat: "Founders", front: "Who founded Supabase?", back: "Paul Copplestone (CEO): Australian developer/entrepreneur. Strong open-source conviction — best developer tools should be transparent and extensible.\n\nAnt Wilson (CTO): Deep database and infrastructure expertise.\n\nBased in Singapore, fully remote team." },
+      { cat: "What They Build", front: "What is Supabase?", back: "The open-source Firebase alternative. PostgreSQL database, authentication, instant APIs, edge functions, real-time subscriptions, storage, and vector embeddings (for AI). Developers build full-stack apps in hours. Everything on standard PostgreSQL — no lock-in, fully portable." },
+      { cat: "Why It Matters", front: "Why is Supabase winning developers?", back: "2M+ developers (up from 100K when Felicis invested). Open-source means massive community contributions. AI features (vector embeddings, pgvector) position them as the default database for AI apps. Developers love it: familiar PostgreSQL, powerful, zero vendor lock-in." },
+      { cat: "By The Numbers", front: "Supabase's trajectory?", back: "$116M+ raised. Series C led by Felicis. YC S20. 2M+ developers. 65K+ GitHub stars. Used by companies of all sizes. Remote-first, Singapore-based. One of the fastest developer adoption curves in modern infrastructure." }
+    ]
+  },
+  {
+    id: "semgrep",
+    name: "Semgrep",
+    color: "#10B981",
+    emoji: "🛡️",
+    cards: [
+      { cat: "Origin Story", front: "How did Semgrep explode from scanning thousands to billions of lines?", back: "Started as an open-source static analysis tool. The insight: existing code security tools were too slow, noisy, and required security expertise. Semgrep made rules look like the code they match — so any developer could write security checks. Growth exploded organically through developer love." },
+      { cat: "Founders", front: "Who leads Semgrep?", back: "Isaac Evans (CEO): Built the company from academic research into a commercial powerhouse. Security research and developer tooling background. The founding team realized shifting security 'left' (earlier in development) required tools developers actually enjoy using." },
+      { cat: "What They Build", front: "What does Semgrep do?", back: "Code security platform: finds bugs, vulnerabilities, and anti-patterns. 500+ built-in rules across 30+ languages. AI-powered Semgrep Assistant understands code context, reduces false positives, auto-triages. Integrates into CI/CD pipelines. Open-source core with enterprise offering." },
+      { cat: "Why It Matters", front: "Why does code security matter more than ever?", back: "AI-generated code is flooding codebases — but AI makes mistakes. Semgrep scaled from thousands to 100M+ lines monthly (since Felicis invested). As every company ships more code faster with AI, the attack surface grows exponentially. Semgrep is the safety net." },
+      { cat: "By The Numbers", front: "Semgrep's scale?", back: "100M+ lines scanned monthly. Used by major enterprises in tech, finance, healthcare. Multiple funding rounds including Felicis. Open-source core with commercial enterprise offering. San Francisco-based." }
+    ]
+  },
+  {
+    id: "vannevar",
+    name: "Vannevar Labs",
+    color: "#6366F1",
+    emoji: "🎯",
+    cards: [
+      { cat: "Origin Story", front: "Why is it called Vannevar?", back: "Named after Vannevar Bush, WWII science advisor who wrote 'As We May Think' (1945) — envisioning technology that augments human intelligence. The founders believe AI should amplify human decision-making in national security, not replace it. They brought Silicon Valley engineering to defense's hardest problems." },
+      { cat: "Founders", front: "Who founded Vannevar Labs?", back: "Brett Granberg (CEO) and Nini Moorhead. Defense-focused technologists who saw military and intelligence agencies drowning in data but starving for insights. Pitch: bring modern AI/ML to national security with startup speed and quality, not slow defense contractor pace." },
+      { cat: "What They Build", front: "What does Vannevar build?", back: "AI-powered intelligence and decision support for national security. Processes vast data — satellite imagery, signals intelligence, open-source data — to surface actionable insights for military and intelligence operators. Think 'Google for defense analysts' with classified-level security." },
+      { cat: "Why It Matters", front: "Why does Vannevar matter right now?", back: "Geopolitical tensions rising. Military operations generate more data than humans can process. Vannevar is at the AI + defense intersection — a market growing as governments realize AI is an operational necessity. Felicis team 'flew across the country to have some barbecue and discuss defense problems.'" },
+      { cat: "By The Numbers", front: "Vannevar's position?", back: "Valued $500M–$1B range. Profitable company. Multiple government contracts. Felicis investor. Active hiring for Forward Deployed Engineers. NYC satellite office. Strong culture alignment with Felicis's mission-driven investing." }
+    ]
+  },
+  {
+    id: "exowatt",
+    name: "Exowatt",
+    color: "#F97316",
+    emoji: "☀️",
+    cards: [
+      { cat: "Origin Story", front: "What problem is Exowatt tackling?", back: "AI data centers face a power crisis — energy is the #1 bottleneck. Grid connections take years. Exowatt is building modular energy systems combining solar thermal with long-duration storage to provide clean, affordable, 24/7 power specifically designed for data center workloads." },
+      { cat: "Founders", front: "Who's behind Exowatt?", back: "Founded by energy and deep-tech entrepreneurs in Miami, FL. The team combines solar thermal engineering, energy storage, and data center infrastructure expertise. They saw the opportunity to solve AI's energy crisis with a novel approach independent of grid expansion." },
+      { cat: "What They Build", front: "What is Exowatt's technology?", back: "Modular clean energy using concentrated solar thermal paired with proprietary thermal storage. Unlike solar panels (only work when sun shines), thermal storage enables 24/7 power delivery — critical for data centers that can't tolerate intermittency. Faster to deploy than grid connections." },
+      { cat: "Why It Matters", front: "Why is Exowatt important for AI?", back: "Every major AI company is desperate for power. Grid connections take years. Exowatt's modular approach deploys faster and cheaper than traditional power infrastructure. They're solving the literal energy crisis that could slow AI progress. The market for data center power could reach hundreds of billions." },
+      { cat: "By The Numbers", front: "Exowatt's backing?", back: "Backed by Andreessen Horowitz and Sam Altman. Felicis investor. Based in Miami. Targeting the massive data center power market. Part of the broader energy-for-AI thesis alongside Crusoe and Radiant in the Felicis portfolio." }
+    ]
+  },
+  {
+    id: "corridor",
+    name: "Corridor",
+    color: "#8B5CF6",
+    emoji: "🔒",
+    cards: [
+      { cat: "Origin Story", front: "What is Corridor building?", back: "AI-powered security infrastructure. As cyber threats evolve faster than human teams can respond, Corridor applies advanced AI to detect, analyze, and respond to security threats in real-time. Part of Felicis Fund 10." },
+      { cat: "Founders", front: "Who's behind Corridor?", back: "Early-stage founding team with cybersecurity and AI backgrounds. Connected to Felicis network — Michael (Felicis Venture Partner) is an angel investor. Fund 10 company, indicating a very recent investment." },
+      { cat: "What They Build", front: "What does Corridor's product do?", back: "AI-native security platform for evolving cyber threats. Leverages modern AI/ML for security monitoring, threat detection, and automated response — areas where legacy tools can't keep pace with sophisticated attackers." },
+      { cat: "Why It Matters", front: "Why is AI security critical now?", back: "AI deployed everywhere = exponentially growing attack surface. AI-generated code, AI agents accessing systems, and AI-powered attacks create entirely new threat vectors. Companies need AI-native security tools matching the speed and sophistication of AI-powered threats." },
+      { cat: "By The Numbers", front: "Corridor's stage?", back: "Fund 10 investment (Felicis's latest $900M fund). Early-stage. Part of Felicis's cybersecurity + AI infrastructure thesis. Connected to the firm's venture partner network." }
+    ]
+  },
+  {
+    id: "standard_kernel",
+    name: "Standard Kernel",
+    color: "#D946EF",
+    emoji: "🧠",
+    cards: [
+      { cat: "Origin Story", front: "What is Standard Kernel?", back: "An early-stage AI company in Felicis's priority portfolio. Operating in stealth, building foundational AI technology. The name suggests work at the 'kernel' level — core AI infrastructure or model architecture that other systems build upon." },
+      { cat: "Founders", front: "What do we know about the team?", back: "Limited public info — stealth/early stage. As a Felicis priority company, the founding team likely has exceptional technical pedigree. Felicis pattern: back founders from top AI labs (DeepMind, OpenAI, Meta FAIR) building category-defining companies." },
+      { cat: "What They Build", front: "What might Standard Kernel be building?", back: "Based on the name and Felicis's thesis, likely core AI infrastructure at the model architecture or systems level. 'Standard' + 'Kernel' suggests foundational building blocks that other AI systems build upon." },
+      { cat: "Why It Matters", front: "Why is this a priority company?", back: "Listed alongside Ricursive ($4B), Skild ($14B), and Periodic ($1.5B). This level of Felicis prioritization suggests exceptional founder quality and massive market opportunity, even at early stage." },
+      { cat: "By The Numbers", front: "Standard Kernel's stage?", back: "Early-stage Felicis priority company. Limited public information. More details to emerge as company comes out of stealth. Check with deal team for latest." }
+    ]
+  },
+  {
+    id: "entire",
+    name: "Entire",
+    color: "#14B8A6",
+    emoji: "🌐",
+    cards: [
+      { cat: "Origin Story", front: "What is Entire?", back: "Fund 10 company in Felicis's priority portfolio. Operating in stealth or pre-launch. May be operating under a different name or maintaining a deliberately low profile. Felicis Fund 10 companies span AI, cybersecurity, infrastructure, and frontier tech." },
+      { cat: "Founders", front: "What do we know about Entire's team?", back: "Limited public info. As a Fund 10 priority company, Felicis has high conviction in the founders. The firm's recent investments focus on AI/ML, defense, and infrastructure — Entire likely falls into one of these categories." },
+      { cat: "What They Build", front: "What is Entire building?", back: "Unknown — stealth stage. Worth asking the deal team for the latest on this company's direction. Being on the priority list signals Felicis sees something exceptional here." },
+      { cat: "Why It Matters", front: "Why is Entire on the priority list?", back: "Listed alongside companies valued at $1.5B–$14B. Even without public info, priority status signals exceptional founder quality and market opportunity. Early-stage priority companies often represent the fund's highest-conviction bets." },
+      { cat: "By The Numbers", front: "Entire's status?", back: "Fund 10 ($900M fund). Stealth stage. Priority company. Check with deal team for current status, founder details, and hiring plans." }
+    ]
+  },
+  {
+    id: "artemis",
+    name: "Artemis",
+    color: "#06B6D4",
+    emoji: "📊",
+    cards: [
+      { cat: "Origin Story", front: "What is Artemis?", back: "A crypto/DeFi analytics platform. In a landscape flooded with blockchain data, Artemis provides institutional-grade analytics helping investors, protocols, and researchers understand what's happening across crypto ecosystems." },
+      { cat: "Founders", front: "Who built Artemis?", back: "Founded by a team passionate about bringing transparency and data-driven decisions to crypto. They saw traditional financial analytics didn't translate to DeFi protocols and blockchain networks — a new toolset was needed." },
+      { cat: "What They Build", front: "What does Artemis offer?", back: "Comprehensive blockchain analytics at artemis.xyz. Tracks on-chain metrics across multiple blockchains: transaction volumes, active addresses, developer activity, TVL, revenue. 'Bloomberg Terminal for crypto' with real-time, cross-chain data." },
+      { cat: "Why It Matters", front: "Why is crypto analytics important?", back: "As crypto matures and institutional money flows in, investors need reliable data infrastructure. Artemis provides the analytical backbone separating signal from noise. Cross-chain approach gives a holistic ecosystem view essential for the multi-chain future." },
+      { cat: "By The Numbers", front: "Artemis overview?", back: "Platform at artemis.xyz. Multiple blockchains and protocols covered. Used by institutional investors, protocol teams, researchers. Felicis priority company. Careers at artemis.xyz/careers." }
+    ]
+  },
+  {
+    id: "sphere",
+    name: "Sphere",
+    color: "#7C3AED",
+    emoji: "🔮",
+    cards: [
+      { cat: "Origin Story", front: "What is Sphere?", back: "A Felicis priority portfolio company. Operating at the intersection of AI and a specific vertical, building technology with transformative potential. Early-stage with limited public details." },
+      { cat: "Founders", front: "What do we know about Sphere's team?", back: "Meets Felicis's high bar for technical talent and market insight. Recent pattern: backing researchers from top AI labs who identify underserved markets where AI creates step-function improvements." },
+      { cat: "What They Build", front: "What is Sphere building?", back: "Based on Felicis portfolio themes, likely AI-powered solutions in a large vertical. The name suggests a comprehensive approach to their target domain. Check with deal team for specifics." },
+      { cat: "Why It Matters", front: "Why is Sphere a priority?", back: "Included alongside breakout companies like Skild AI and Ricursive Intelligence on the most important companies list. Strong internal conviction about founders and market opportunity." },
+      { cat: "By The Numbers", front: "Sphere's stage?", back: "Early-stage Felicis priority. Limited public info. Check with deal team for details on progress, hiring, and positioning." }
+    ]
+  },
+  {
+    id: "runlayer",
+    name: "Runlayer",
+    color: "#E11D48",
+    emoji: "🏗️",
+    cards: [
+      { cat: "Origin Story", front: "What is Runlayer?", back: "A Felicis priority company in AI infrastructure. The name suggests focus on the 'run layer' — the execution/inference layer of AI systems. Critical area as AI moves from training to deployment at scale." },
+      { cat: "Founders", front: "What do we know about Runlayer's team?", back: "Early-stage team building in AI infrastructure. As Felicis priority, likely features founders with strong technical backgrounds from major AI/cloud companies." },
+      { cat: "What They Build", front: "What does Runlayer build?", back: "Likely AI infrastructure for model execution, deployment, or inference. 'Run' + 'layer' suggests middleware/platform tech between AI models and production applications. The inference layer is becoming the critical bottleneck." },
+      { cat: "Why It Matters", front: "Why is the 'run layer' important?", back: "As AI moves from experimentation to production, infrastructure for running models reliably and at scale becomes critical. Model serving, scaling, monitoring, optimization — a massive and growing market that's still underserved." },
+      { cat: "By The Numbers", front: "Runlayer's status?", back: "Felicis priority company. Early stage. Part of AI infrastructure thesis. Check with deal team for funding, team, and hiring details." }
+    ]
+  },
+  {
+    id: "unsiloed",
+    name: "Unsiloed AI",
+    color: "#F43F5E",
+    emoji: "📄",
+    cards: [
+      { cat: "Origin Story", front: "What problem did Unsiloed AI's founders see?", back: "AI teams spend 6+ months building document ingestion workflows, yet fewer than 10% ever reach production. Generic LLM parsers and OCR collapse on real-world documents with mixed text, tables, images, and charts. Poor parsing cripples RAG pipelines and downstream automation. Unsiloed built state-of-the-art vision models to solve this." },
+      { cat: "Founders", front: "Who founded Unsiloed AI?", back: "Aman Mishra (CEO): IIT Kharagpur. Previously built ultra low-latency trading systems moving billions at a hedge fund. Ex-Entrepreneur First. Founding Engineer (#1) at a stealth startup building AI copilots for Goldman Sachs and Charles Schwab.\n\nAdnan Abbas (CTO): MIT + IIT Kharagpur. Built multimodal models deployed at a Fortune 10 company. Previously built autonomous navigation systems at Mercedes-Benz." },
+      { cat: "What They Build", front: "What does Unsiloed AI do?", back: "APIs that turn complex, multimodal unstructured data (PDFs, PPTs, DOCX, tables, charts, images) into structured Markdown and JSON for LLMs and AI agents. Uses proprietary vision-language models — not just OCR. Outperforms LlamaIndex, Gemini, Mistral, and Unstructured.io on public benchmarks. One API call replaces months of ingestion work." },
+      { cat: "Why It Matters", front: "Why is document parsing a massive opportunity?", back: "80%+ of enterprise data is multimodal and unstructured. Finance, legal, and healthcare are drowning in complex documents. Every AI agent and RAG pipeline needs a reliable data ingestion layer. Unsiloed is becoming infrastructure — already processing millions of pages weekly for Fortune 150 banks and NASDAQ-listed companies." },
+      { cat: "By The Numbers", front: "Unsiloed AI's traction?", back: "YC F25 batch. ~7 employees, SF-based. $550K revenue by Nov 2025. Processing millions of pages weekly. Customers: Fortune 150 banks, NASDAQ companies, 10+ YC startups. Investors: Y Combinator, Entrepreneurs First, Orange Collective, Spot VC. Actively hiring Founding ML Researcher and engineers." }
+    ]
+  }
+];
+
+const CATEGORIES = ["Origin Story", "Founders", "What They Build", "Why It Matters", "By The Numbers"];
+
+function FlashcardApp() {
+  const [view, setView] = useState("menu");
+  const [selectedCompany, setSelectedCompany] = useState(null);
+  const [cardIndex, setCardIndex] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [studied, setStudied] = useState({});
+  const [quizCards, setQuizCards] = useState([]);
+  const [quizIndex, setQuizIndex] = useState(0);
+  const [quizScore, setQuizScore] = useState(0);
+  const [quizRevealed, setQuizRevealed] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const markStudied = useCallback((companyId, idx) => {
+    setStudied(prev => ({ ...prev, [`${companyId}-${idx}`]: true }));
+  }, []);
+
+  const studiedCount = (companyId) =>
+    COMPANIES.find(c => c.id === companyId)?.cards.filter((_, i) => studied[`${companyId}-${i}`]).length || 0;
+
+  const totalStudied = Object.keys(studied).length;
+  const totalCards = COMPANIES.reduce((sum, c) => sum + c.cards.length, 0);
+
+  const startQuiz = () => {
+    const all = [];
+    COMPANIES.forEach(c => c.cards.forEach(card => all.push({ ...card, company: c.name, color: c.color, emoji: c.emoji })));
+    const shuffled = all.sort(() => Math.random() - 0.5).slice(0, 15);
+    setQuizCards(shuffled);
+    setQuizIndex(0);
+    setQuizScore(0);
+    setQuizRevealed(false);
+    setView("quiz");
+  };
+
+  const filtered = COMPANIES.filter(c => c.name.toLowerCase().includes(searchTerm.toLowerCase()));
+
+  const groups = {
+    "🔬 AI / ML & Foundation Models": filtered.filter(c => ["ricursive","periodic","datology","simular","skild","poolside","lmarena","standard_kernel"].includes(c.id)),
+    "⚡ Energy & Infrastructure": filtered.filter(c => ["crusoe","radiant","exowatt","armada"].includes(c.id)),
+    "🛠️ Developer Tools & Platforms": filtered.filter(c => ["chalk","n8n","supabase","semgrep","runway","runlayer","unsiloed"].includes(c.id)),
+    "🔒 Security & Defense": filtered.filter(c => ["vannevar","corridor"].includes(c.id)),
+    "📊 Other Priority": filtered.filter(c => ["artemis","sphere","entire"].includes(c.id)),
+  };
+
+  // MENU VIEW
+  if (view === "menu") {
+    return (
+      <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#08080e", minHeight: "100vh", color: "#e2e8f0", padding: "24px 16px" }}>
+        <div style={{ maxWidth: 880, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: 28 }}>
+            <div style={{ fontSize: 11, letterSpacing: 3, color: "#64748b", textTransform: "uppercase", marginBottom: 6 }}>Felicis Portfolio</div>
+            <h1 style={{ fontSize: 26, fontWeight: 700, margin: 0, color: "#f8fafc" }}>
+              Flashcard Study Deck
+            </h1>
+            <p style={{ color: "#64748b", fontSize: 13, marginTop: 6 }}>
+              {totalStudied}/{totalCards} cards · {COMPANIES.length} companies
+            </p>
+            <div style={{ width: 240, height: 3, background: "#1e293b", borderRadius: 2, margin: "10px auto 0" }}>
+              <div style={{ width: `${(totalStudied / totalCards) * 100}%`, height: "100%", background: "linear-gradient(90deg, #3b82f6, #8b5cf6)", borderRadius: 2, transition: "width 0.4s" }} />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+            <input
+              type="text" placeholder="Search companies..." value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              style={{ flex: 1, padding: "10px 14px", background: "#111118", border: "1px solid #1e293b", borderRadius: 8, color: "#e2e8f0", fontSize: 14, outline: "none" }}
+            />
+            <button onClick={startQuiz} style={{
+              padding: "10px 18px", background: "#3b82f6", border: "none", borderRadius: 8,
+              color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 13, whiteSpace: "nowrap"
+            }}>
+              🎲 Quiz (15)
+            </button>
+          </div>
+
+          {Object.entries(groups).map(([group, companies]) => {
+            if (!companies.length) return null;
+            return (
+              <div key={group} style={{ marginBottom: 22 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#475569", letterSpacing: 0.5, marginBottom: 8 }}>{group}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(190px, 1fr))", gap: 8 }}>
+                  {companies.map(c => {
+                    const sc = studiedCount(c.id);
+                    const total = c.cards.length;
+                    const done = sc === total;
+                    return (
+                      <button key={c.id} onClick={() => { setSelectedCompany(c); setCardIndex(0); setFlipped(false); setView("study"); }}
+                        style={{
+                          padding: "12px 14px", background: "#0f0f18", border: `1px solid ${done ? c.color + "44" : "#1a1a2a"}`,
+                          borderRadius: 10, cursor: "pointer", textAlign: "left", transition: "all 0.15s", position: "relative", overflow: "hidden"
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.borderColor = c.color + "55"; e.currentTarget.style.transform = "translateY(-1px)"; }}
+                        onMouseLeave={e => { e.currentTarget.style.borderColor = done ? c.color + "44" : "#1a1a2a"; e.currentTarget.style.transform = "none"; }}
+                      >
+                        <div style={{ position: "absolute", top: 0, left: 0, width: `${(sc / total) * 100}%`, height: 2, background: c.color, transition: "width 0.3s" }} />
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 18 }}>{c.emoji}</span>
+                          <div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#e2e8f0", lineHeight: 1.2 }}>{c.name}</div>
+                            <div style={{ fontSize: 11, color: "#4b5563", marginTop: 2 }}>{sc}/{total}{done ? " ✓" : ""}</div>
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // STUDY VIEW
+  if (view === "study" && selectedCompany) {
+    const card = selectedCompany.cards[cardIndex];
+    return (
+      <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#08080e", minHeight: "100vh", color: "#e2e8f0", padding: "20px 16px" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 13 }}>← Back</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <span style={{ fontSize: 16 }}>{selectedCompany.emoji}</span>
+              <span style={{ fontWeight: 600, color: selectedCompany.color, fontSize: 14 }}>{selectedCompany.name}</span>
+            </div>
+            <span style={{ fontSize: 12, color: "#4b5563" }}>{cardIndex + 1}/{selectedCompany.cards.length}</span>
+          </div>
+
+          <div style={{ display: "flex", gap: 4, marginBottom: 14, flexWrap: "wrap" }}>
+            {selectedCompany.cards.map((c, i) => (
+              <button key={i} onClick={() => { setCardIndex(i); setFlipped(false); }}
+                style={{
+                  padding: "4px 10px", fontSize: 11, borderRadius: 5, cursor: "pointer", border: "none",
+                  background: i === cardIndex ? selectedCompany.color : studied[`${selectedCompany.id}-${i}`] ? selectedCompany.color + "22" : "#151520",
+                  color: i === cardIndex ? "#000" : "#94a3b8", fontWeight: i === cardIndex ? 700 : 400
+                }}
+              >{c.cat}</button>
+            ))}
+          </div>
+
+          <div onClick={() => { setFlipped(!flipped); if (!flipped) markStudied(selectedCompany.id, cardIndex); }}
+            style={{ perspective: 1200, cursor: "pointer", marginBottom: 14 }}>
+            <div style={{
+              position: "relative", width: "100%", minHeight: 320,
+              transformStyle: "preserve-3d", transition: "transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)",
+              transform: flipped ? "rotateY(180deg)" : "rotateY(0)"
+            }}>
+              <div style={{
+                position: "absolute", inset: 0, backfaceVisibility: "hidden",
+                background: "#0f0f18", border: `1px solid ${selectedCompany.color}22`, borderRadius: 14, padding: 28,
+                display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center"
+              }}>
+                <div style={{ fontSize: 10, color: selectedCompany.color, textTransform: "uppercase", letterSpacing: 2, marginBottom: 14, fontWeight: 600 }}>{card.cat}</div>
+                <div style={{ fontSize: 19, fontWeight: 600, textAlign: "center", lineHeight: 1.5 }}>{card.front}</div>
+                <div style={{ fontSize: 11, color: "#4b5563", marginTop: 18 }}>tap to reveal</div>
+              </div>
+              <div style={{
+                position: "absolute", inset: 0, backfaceVisibility: "hidden", transform: "rotateY(180deg)",
+                background: `linear-gradient(160deg, ${selectedCompany.color}0a, #0f0f18)`,
+                border: `1px solid ${selectedCompany.color}33`, borderRadius: 14, padding: 24,
+                display: "flex", flexDirection: "column", justifyContent: "center", overflowY: "auto"
+              }}>
+                <div style={{ fontSize: 10, color: selectedCompany.color, textTransform: "uppercase", letterSpacing: 2, marginBottom: 10, fontWeight: 600 }}>{card.cat}</div>
+                <div style={{ fontSize: 13.5, lineHeight: 1.75, whiteSpace: "pre-line" }}>{card.back}</div>
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <button onClick={() => { setCardIndex(Math.max(0, cardIndex - 1)); setFlipped(false); }}
+              disabled={cardIndex === 0}
+              style={{ padding: "10px 20px", background: "#151520", border: "none", borderRadius: 8, color: cardIndex === 0 ? "#252530" : "#e2e8f0", cursor: cardIndex === 0 ? "default" : "pointer", fontSize: 13 }}>
+              ← Prev
+            </button>
+            <button onClick={() => {
+              if (cardIndex < selectedCompany.cards.length - 1) { setCardIndex(cardIndex + 1); setFlipped(false); }
+              else setView("menu");
+            }}
+              style={{ padding: "10px 20px", background: selectedCompany.color, border: "none", borderRadius: 8, color: "#000", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
+              {cardIndex < selectedCompany.cards.length - 1 ? "Next →" : "Done ✓"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // QUIZ VIEW
+  if (view === "quiz") {
+    if (quizIndex >= quizCards.length) {
+      const pct = Math.round((quizScore / quizCards.length) * 100);
+      return (
+        <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#08080e", minHeight: "100vh", color: "#e2e8f0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ textAlign: "center", maxWidth: 360 }}>
+            <div style={{ fontSize: 56, marginBottom: 12 }}>{pct >= 80 ? "🏆" : pct >= 50 ? "👏" : "📚"}</div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, marginBottom: 6 }}>Quiz Complete!</h2>
+            <p style={{ fontSize: 36, fontWeight: 800, color: "#3b82f6" }}>{quizScore}/{quizCards.length}</p>
+            <p style={{ color: "#64748b", marginBottom: 20 }}>{pct}% — {pct >= 80 ? "Portfolio expert!" : pct >= 50 ? "Getting there!" : "Keep studying!"}</p>
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button onClick={startQuiz} style={{ padding: "10px 20px", background: "#3b82f6", border: "none", borderRadius: 8, color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 13 }}>Try Again</button>
+              <button onClick={() => setView("menu")} style={{ padding: "10px 20px", background: "#151520", border: "none", borderRadius: 8, color: "#e2e8f0", cursor: "pointer", fontSize: 13 }}>Menu</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const qCard = quizCards[quizIndex];
+    return (
+      <div style={{ fontFamily: "'DM Sans', 'Helvetica Neue', sans-serif", background: "#08080e", minHeight: "100vh", color: "#e2e8f0", padding: "20px 16px" }}>
+        <div style={{ maxWidth: 640, margin: "0 auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+            <button onClick={() => setView("menu")} style={{ background: "none", border: "none", color: "#64748b", cursor: "pointer", fontSize: 13 }}>← Exit</button>
+            <span style={{ fontSize: 13, color: "#64748b" }}>Q{quizIndex + 1}/{quizCards.length} · Score: {quizScore}</span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
+            <span style={{ fontSize: 16 }}>{qCard.emoji}</span>
+            <span style={{ fontWeight: 600, color: qCard.color, fontSize: 13 }}>{qCard.company}</span>
+            <span style={{ fontSize: 10, color: "#4b5563", background: "#151520", padding: "2px 6px", borderRadius: 4 }}>{qCard.cat}</span>
+          </div>
+
+          <div onClick={() => setQuizRevealed(true)} style={{
+            background: "#0f0f18", border: `1px solid ${qCard.color}22`, borderRadius: 14, padding: 28,
+            marginBottom: 14, minHeight: quizRevealed ? "auto" : 180,
+            display: "flex", flexDirection: "column", justifyContent: "center",
+            cursor: quizRevealed ? "default" : "pointer"
+          }}>
+            <div style={{ fontSize: 17, fontWeight: 600, lineHeight: 1.5, marginBottom: quizRevealed ? 16 : 0 }}>{qCard.front}</div>
+            {!quizRevealed && <div style={{ fontSize: 11, color: "#4b5563", marginTop: 10 }}>tap to reveal</div>}
+            {quizRevealed && (
+              <div style={{ borderTop: `1px solid ${qCard.color}22`, paddingTop: 14, fontSize: 13.5, lineHeight: 1.75, whiteSpace: "pre-line", color: "#cbd5e1" }}>
+                {qCard.back}
+              </div>
+            )}
+          </div>
+
+          {quizRevealed && (
+            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
+              <button onClick={() => { setQuizIndex(quizIndex + 1); setQuizRevealed(false); }}
+                style={{ padding: "10px 28px", background: "#dc2626", border: "none", borderRadius: 8, color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 13 }}>
+                ✗ Didn't know
+              </button>
+              <button onClick={() => { setQuizScore(quizScore + 1); setQuizIndex(quizIndex + 1); setQuizRevealed(false); }}
+                style={{ padding: "10px 28px", background: "#16a34a", border: "none", borderRadius: 8, color: "#fff", fontWeight: 600, cursor: "pointer", fontSize: 13 }}>
+                ✓ Got it!
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+  return null;
+}
+
+
+ReactDOM.createRoot(document.getElementById('root')).render(<FlashcardApp />);
+</script>
+</body>
+</html>
